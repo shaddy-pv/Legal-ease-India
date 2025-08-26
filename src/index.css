@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* LegalEase India Design System - Indian-inspired dark theme */
+
+@layer base {
+  :root {
+    /* Main Brand Colors - Indian Flag Inspired */
+    --primary: 211 100% 12%; /* Deep Navy Blue #0A192F */
+    --primary-foreground: 0 0% 98%;
+    
+    --saffron: 28 100% 60%; /* Saffron #FF9933 */
+    --saffron-foreground: 0 0% 98%;
+    
+    --india-green: 127 97% 29%; /* Indian Green #138808 */
+    --india-green-foreground: 0 0% 98%;
+    
+    /* Background & Surface */
+    --background: 210 40% 3%; /* Very dark blue-grey */
+    --foreground: 210 40% 98%;
+    
+    --card: 210 30% 6%; /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 210 30% 6%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Secondary Colors */
+    --secondary: 210 20% 12%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 210 20% 8%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 28 100% 60%; /* Saffron accent */
+    --accent-foreground: 0 0% 98%;
+    
+    /* Status Colors */
+    --success: 127 97% 29%; /* Green */
+    --success-foreground: 0 0% 98%;
+    
+    --warning: 28 100% 60%; /* Saffron for medium risk */
+    --warning-foreground: 0 0% 98%;
+    
+    --destructive: 0 84% 60%; /* Red for high risk */
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Borders & Inputs */
+    --border: 210 20% 15%;
+    --input: 210 20% 12%;
+    --ring: 28 100% 60%; /* Saffron ring */
+    
+    --radius: 0.75rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--saffron)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--india-green)) 50%, hsl(var(--saffron)) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(var(--saffron) / 0.15);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    
+    /* Risk Level Colors */
+    --risk-low: 127 97% 29%; /* Green */
+    --risk-medium: 28 100% 60%; /* Saffron */
+    --risk-high: 0 84% 60%; /* Red */
+    
+    /* Chat Colors */
+    --chat-user: 28 100% 60%; /* Saffron */
+    --chat-bot: 211 100% 12%; /* Primary */
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+    background-image: 
+      radial-gradient(circle at 20% 80%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(var(--saffron) / 0.1) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-accent rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent/80;
+  }
+}
+
+@layer components {
+  /* Button Variants */
+  .btn-hero {
+    @apply bg-gradient-to-r from-saffron to-india-green text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-elegant;
+  }
+  
+  .btn-saffron {
+    @apply bg-saffron text-saffron-foreground hover:bg-saffron/90;
+  }
+  
+  .btn-green {
+    @apply bg-india-green text-india-green-foreground hover:bg-india-green/90;
+  }
+  
+  /* Card Variants */
+  .card-glass {
+    @apply bg-card/50 backdrop-blur-sm border border-border/50;
+  }
+  
+  .card-gradient {
+    background: var(--gradient-card);
+    @apply border border-border/30;
+  }
+  
+  /* Risk Level Styles */
+  .risk-low {
+    @apply bg-success/10 text-success border-success/20;
+  }
+  
+  .risk-medium {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+  
+  .risk-high {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+  
+  /* Animation Classes */
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  /* Chat Bubble Styles */
+  .chat-user {
+    @apply bg-saffron text-saffron-foreground ml-12 rounded-br-none;
+  }
+  
+  .chat-bot {
+    @apply bg-card text-card-foreground mr-12 rounded-bl-none;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-saffron to-india-green bg-clip-text text-transparent;
+  }
+  
+  .border-gradient {
+    border-image: linear-gradient(135deg, hsl(var(--saffron)), hsl(var(--india-green))) 1;
+  }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 20px hsl(var(--saffron) / 0.3); }
+  100% { box-shadow: 0 0 40px hsl(var(--saffron) / 0.6); }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--accent) / 0.4); }
+  50% { box-shadow: 0 0 40px hsl(var(--accent) / 0.8); }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
