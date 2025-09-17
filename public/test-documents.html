@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Documents for LegalEase India</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #FF9933;
+            text-align: center;
+        }
+        .document {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .document h3 {
+            color: #138808;
+            margin-top: 0;
+        }
+        .download-btn {
+            background: #FF9933;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .download-btn:hover {
+            background: #e6891a;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ LegalEase India - Test Documents</h1>
+        
+        <div class="instructions">
+            <h3>📋 How to Test the Application:</h3>
+            <ol>
+                <li>Start the application: <code>npm run dev</code></li>
+                <li>Open <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+                <li>Go to the Upload page</li>
+                <li>Download any of the sample documents below</li>
+                <li>Upload the document to test the AI analysis</li>
+                <li>Try the chat feature to ask questions about the document</li>
+            </ol>
+        </div>
+
+        <div class="document">
+            <h3>📄 Employment Contract</h3>
+            <p><strong>Description:</strong> A comprehensive employment agreement with non-compete clauses, IP assignment, and termination terms.</p>
+            <p><strong>Key Features to Test:</strong> Non-compete restrictions, intellectual property assignment, notice periods</p>
+            <a href="sample-documents/employment-contract.pdf" class="download-btn" download>Download PDF</a>
+        </div>
+
+        <div class="document">
+            <h3>🏠 Rental Agreement</h3>
+            <p><strong>Description:</strong> A residential rental agreement with payment terms, maintenance responsibilities, and tenancy conditions.</p>
+            <p><strong>Key Features to Test:</strong> Payment terms, security deposit, subletting restrictions, pet policy</p>
+            <a href="sample-documents/rental-agreement.pdf" class="download-btn" download>Download PDF</a>
+        </div>
+
+        <div class="document">
+            <h3>💼 Service Agreement</h3>
+            <p><strong>Description:</strong> A professional service contract for web development with payment terms, IP rights, and warranty clauses.</p>
+            <p><strong>Key Features to Test:</strong> Payment schedules, intellectual property transfer, termination clauses, force majeure</p>
+            <a href="sample-documents/service-agreement.pdf" class="download-btn" download>Download PDF</a>
+        </div>
+
+        <div class="instructions">
+            <h3>🔍 What to Look For During Testing:</h3>
+            <ul>
+                <li><strong>Risk Assessment:</strong> High/Medium/Low risk categorization</li>
+                <li><strong>Indian Law Context:</strong> References to Indian legal frameworks</li>
+                <li><strong>Multi-language Support:</strong> English and Hindi summaries</li>
+                <li><strong>Chat Functionality:</strong> Ask questions about specific clauses</li>
+                <li><strong>Document Analysis:</strong> Clause identification and explanation</li>
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Additional Test Documents:</h3>
+            <p>You can also test with your own documents:</p>
+            <ul>
+                <li>Employment contracts</li>
+                <li>Rental/lease agreements</li>
+                <li>Service agreements</li>
+                <li>Purchase orders</li>
+                <li>NDAs and confidentiality agreements</li>
+                <li>Terms and conditions</li>
+                <li>Privacy policies</li>
+            </ul>
+            <p><strong>Supported Formats:</strong> PDF and DOCX files up to 10MB</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -25,6 +25,8 @@ This project is built with:
 
 - Node.js (version 18 or higher)
 - npm or yarn package manager
+- Gemini AI API key (get from [Google AI Studio](https://makersuite.google.com/app/apikey))
+- Supabase account (optional, for user authentication)
 
 ### Installation
 
@@ -39,13 +41,50 @@ This project is built with:
    npm install
    ```
 
-3. **Start the development server**
+3. **Set up environment variables**
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit .env and add your API keys
+   # VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   # VITE_SUPABASE_URL=your_supabase_url_here
+   # VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   ```
+
+4. **Start the development server**
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to `http://localhost:8080` to view the application.
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Required: Gemini AI API Key
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+
+# Optional: Supabase Configuration (for user authentication)
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Optional: Application Configuration
+VITE_APP_NAME=LegalEase India
+VITE_APP_VERSION=1.0.0
+```
+
+**Important**: Never commit your `.env` file to version control. The `.env.example` file is provided as a template.
+
+### Security Notes
+
+- The `.env` file is already added to `.gitignore` to prevent accidental commits
+- API keys are now loaded from environment variables instead of being hardcoded
+- For production deployment, set these environment variables in your hosting platform
+- Never share your actual API keys in public repositories or chat messages
 
 ## Available Scripts
 

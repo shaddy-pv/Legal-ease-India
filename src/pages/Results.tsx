@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { Download, MessageCircle, Filter, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ClauseCard from "@/components/ClauseCard";
 import SummaryCard from "@/components/SummaryCard";
 import { toast } from "@/hooks/use-toast";
+import { DocumentAnalysisResponse } from "@/services/geminiService";
 
 type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "ALL";
 
@@ -31,56 +32,66 @@ interface DocumentResult {
 
 const Results = () => {
   const { docId } = useParams();
+  const location = useLocation();
   const [data, setData] = useState<DocumentResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRisk, setSelectedRisk] = useState<RiskLevel>("ALL");
   const [downloading, setDownloading] = useState(false);
 
-  // Mock data - replace with actual API call
+  // Check if we have analysis data from upload
   useEffect(() => {
-    const mockData: DocumentResult = {
-      summary_en: "This is a comprehensive employment contract that outlines terms and conditions for a software developer position. The contract includes standard clauses for compensation, benefits, intellectual property rights, and termination procedures. Key areas of concern include restrictive non-compete clauses and intellectual property assignment terms that may be overly broad.",
-      summary_local: "यह एक व्यापक रोजगार अनुबंध है जो एक सॉफ्टवेयर डेवलपर पद के लिए नियम और शर्तों को निर्धारित करता है। अनुबंध में मुआवजा, लाभ, बौद्धिक संपदा अधिकार, और समाप्ति प्रक्रियाओं के लिए मानक खंड शामिल हैं।",
-      clauses: [
-        {
-          title: "Non-Compete Agreement",
-          source_excerpt: "Employee agrees not to engage in any business that competes with the Company for a period of 24 months after termination...",
-          explanation_en: "This clause restricts your ability to work for competitors or start a competing business for 2 years after leaving. This may be legally questionable in India.",
-          risk_level: "HIGH",
-          risk_reasons: ["Overly restrictive time period", "May violate right to livelihood", "Broad geographic scope"],
-          india_markers: ["employment_law", "restraint_of_trade", "constitutional_rights"]
-        },
-        {
-          title: "Intellectual Property Assignment",
-          source_excerpt: "All work product, inventions, and ideas conceived during employment shall be the exclusive property of the Company...",
-          explanation_en: "This assigns all your creative work to the company, including personal projects during employment. Consider negotiating exceptions for personal work.",
-          risk_level: "MEDIUM",
-          risk_reasons: ["Includes personal time work", "No exceptions for personal projects"],
-          india_markers: ["ip_law", "copyright_act"]
-        },
-        {
-          title: "Termination Notice Period",
-          source_excerpt: "Either party may terminate this agreement with 30 days written notice...",
-          explanation_en: "Standard 30-day notice period is reasonable and complies with Indian labor laws for most positions.",
-          risk_level: "LOW",
-          risk_reasons: [],
-          india_markers: ["labour_law", "notice_period"]
-        }
-      ],
-      recommended_questions: [
-        "Can the non-compete clause be enforced in Indian courts?",
-        "What happens to my personal projects under the IP clause?",
-        "Are there any exceptions to the intellectual property assignment?",
-        "Can I negotiate the non-compete period?"
-      ],
-      disclaimer: "This analysis is for informational purposes only and does not constitute legal advice. Please consult with a qualified legal professional for specific legal matters."
-    };
-
-    setTimeout(() => {
-      setData(mockData);
+    const analysisData = location.state?.analysisData as DocumentAnalysisResponse;
+    
+    if (analysisData) {
+      // Use the analysis data from upload
+      setData(analysisData);
       setLoading(false);
-    }, 1500);
-  }, [docId]);
+    } else {
+      // Fallback to mock data for demo purposes
+      const mockData: DocumentResult = {
+        summary_en: "This is a comprehensive employment contract that outlines terms and conditions for a software developer position. The contract includes standard clauses for compensation, benefits, intellectual property rights, and termination procedures. Key areas of concern include restrictive non-compete clauses and intellectual property assignment terms that may be overly broad.",
+        summary_local: "यह एक व्यापक रोजगार अनुबंध है जो एक सॉफ्टवेयर डेवलपर पद के लिए नियम और शर्तों को निर्धारित करता है। अनुबंध में मुआवजा, लाभ, बौद्धिक संपदा अधिकार, और समाप्ति प्रक्रियाओं के लिए मानक खंड शामिल हैं।",
+        clauses: [
+          {
+            title: "Non-Compete Agreement",
+            source_excerpt: "Employee agrees not to engage in any business that competes with the Company for a period of 24 months after termination...",
+            explanation_en: "This clause restricts your ability to work for competitors or start a competing business for 2 years after leaving. This may be legally questionable in India.",
+            risk_level: "HIGH",
+            risk_reasons: ["Overly restrictive time period", "May violate right to livelihood", "Broad geographic scope"],
+            india_markers: ["employment_law", "restraint_of_trade", "constitutional_rights"]
+          },
+          {
+            title: "Intellectual Property Assignment",
+            source_excerpt: "All work product, inventions, and ideas conceived during employment shall be the exclusive property of the Company...",
+            explanation_en: "This assigns all your creative work to the company, including personal projects during employment. Consider negotiating exceptions for personal work.",
+            risk_level: "MEDIUM",
+            risk_reasons: ["Includes personal time work", "No exceptions for personal projects"],
+            india_markers: ["ip_law", "copyright_act"]
+          },
+          {
+            title: "Termination Notice Period",
+            source_excerpt: "Either party may terminate this agreement with 30 days written notice...",
+            explanation_en: "Standard 30-day notice period is reasonable and complies with Indian labor laws for most positions.",
+            risk_level: "LOW",
+            risk_reasons: [],
+            india_markers: ["labour_law", "notice_period"]
+          }
+        ],
+        recommended_questions: [
+          "Can the non-compete clause be enforced in Indian courts?",
+          "What happens to my personal projects under the IP clause?",
+          "Are there any exceptions to the intellectual property assignment?",
+          "Can I negotiate the non-compete period?"
+        ],
+        disclaimer: "This analysis is for informational purposes only and does not constitute legal advice. Please consult with a qualified legal professional for specific legal matters."
+      };
+
+      setTimeout(() => {
+        setData(mockData);
+        setLoading(false);
+      }, 1500);
+    }
+  }, [docId, location.state]);
 
   const filteredClauses = data?.clauses.filter(clause => 
     selectedRisk === "ALL" || clause.risk_level === selectedRisk

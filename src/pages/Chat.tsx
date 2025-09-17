@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { toast } from "@/hooks/use-toast";
+import { geminiService } from "@/services/geminiService";
 
 interface Message {
   id: string;
@@ -64,36 +65,27 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const mockResponse = {
-        answer: "Based on Indian employment law, non-compete clauses must be reasonable in scope, geography, and duration. A 24-month restriction may be considered excessive and potentially unenforceable under Section 27 of the Indian Contract Act, which generally voids agreements in restraint of trade. However, the enforceability would depend on specific circumstances and the court's discretion.",
-        evidence: [
-          { 
-            chunk_id: 1, 
-            snippet: "Employee agrees not to engage in any business that competes with the Company for a period of 24 months after termination..." 
-          },
-          {
-            chunk_id: 2,
-            snippet: "This restriction shall apply within the territory of India and shall include direct and indirect competition..."
-          }
-        ]
-      };
+      // Use Gemini service for chat
+      const response = await geminiService.chatWithDocument({
+        docId: docId || 'unknown',
+        question: messageText,
+        context: 'Legal document analysis context'
+      });
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot", 
-        content: mockResponse.answer,
-        evidence: mockResponse.evidence,
+        content: response.answer,
+        evidence: response.evidence,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
+      console.error('Chat error:', error);
       toast({
         title: "Error",
-        description: "Failed to get response. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to get response. Please try again.",
         variant: "destructive",
       });
     } finally {

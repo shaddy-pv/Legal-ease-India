@@ -3,14 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Shield, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import FileDropZone from "@/components/FileDropZone";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { toast } from "@/hooks/use-toast";
+import { geminiService } from "@/services/geminiService";
 
 const Upload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
   const navigate = useNavigate();
 
   const handleFileSelect = (selectedFile: File) => {
@@ -35,12 +39,8 @@ const Upload = () => {
         });
       }, 200);
 
-      // Simulate API call
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Mock API response - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Use Gemini service for document analysis
+      const analysisResult = await geminiService.analyzeDocument(file, selectedLanguage);
       
       setUploadProgress(100);
       
@@ -49,15 +49,18 @@ const Upload = () => {
         description: "Your document has been processed successfully.",
       });
 
-      // Navigate to results with mock doc_id
+      // Navigate to results with analysis data
       setTimeout(() => {
-        navigate(`/results/mock-doc-id-${Date.now()}`);
+        navigate(`/results/analysis-${Date.now()}`, { 
+          state: { analysisData: analysisResult } 
+        });
       }, 500);
 
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Please try again or contact support.",
+        description: error instanceof Error ? error.message : "Please try again or contact support.",
         variant: "destructive",
       });
     } finally {
@@ -104,6 +107,22 @@ const Upload = () => {
           <div className="space-y-6">
             <Card className="card-gradient">
               <CardContent className="p-6">
+                {/* Language Selector */}
+                <div className="mb-6">
+                  <Label htmlFor="language-select" className="text-sm font-medium text-foreground mb-2 block">
+                    Analysis Language
+                  </Label>
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger id="language-select" className="w-full">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="hi">हिंदी (Hindi)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <FileDropZone
                   onFileSelect={handleFileSelect}
                   isUploading={isUploading}

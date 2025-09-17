@@ -41,6 +41,9 @@ const FileDropZone = ({
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp'],
     },
     multiple: false,
     disabled: isUploading,
@@ -84,7 +87,7 @@ const FileDropZone = ({
                   {isDragActive ? "Drop your document here" : "Upload Legal Document"}
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  Drag & drop or click to select • PDF, DOCX up to 10MB
+                  Drag & drop or click to select • PDF, DOCX, JPG, PNG up to 10MB
                 </p>
               </div>
               <Button variant="outline" className="mt-4 btn-saffron">

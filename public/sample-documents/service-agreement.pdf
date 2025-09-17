@@ -1,0 +1,111 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 2200
+>>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+(SERVICE AGREEMENT) Tj
+0 -20 Td
+(Service Provider: Digital Solutions Pvt Ltd) Tj
+0 -20 Td
+(Client: ABC Corporation) Tj
+0 -20 Td
+(Service: Web Development and Maintenance) Tj
+0 -40 Td
+(TERMS AND CONDITIONS:) Tj
+0 -20 Td
+(1. SCOPE OF WORK) Tj
+0 -15 Td
+(Service Provider shall develop and maintain a corporate website including frontend, backend, and database components. All deliverables must meet industry standards and client specifications.) Tj
+0 -30 Td
+(2. PAYMENT TERMS) Tj
+0 -15 Td
+(Total project cost: Rs. 5,00,000/- payable in 3 installments - 40% on signing, 40% on completion of development, and 20% on final delivery. Late payments shall attract 18% annual interest.) Tj
+0 -30 Td
+(3. INTELLECTUAL PROPERTY) Tj
+0 -15 Td
+(All intellectual property rights, including source code, designs, and documentation, shall remain with the Service Provider until full payment is received. Upon full payment, all rights shall transfer to the Client.) Tj
+0 -30 Td
+(4. CONFIDENTIALITY) Tj
+0 -15 Td
+(Both parties agree to maintain strict confidentiality of all proprietary information, trade secrets, and business data shared during the course of this agreement.) Tj
+0 -30 Td
+(5. DELIVERY TIMELINE) Tj
+0 -15 Td
+(Project shall be delivered within 90 days from the date of agreement. Any delays due to client's failure to provide required information shall extend the timeline accordingly.) Tj
+0 -30 Td
+(6. WARRANTY AND SUPPORT) Tj
+0 -15 Td
+(Service Provider shall provide 6 months of free maintenance and bug fixes post-delivery. Additional support shall be charged at Rs. 2,000 per hour.) Tj
+0 -30 Td
+(7. TERMINATION CLAUSE) Tj
+0 -15 Td
+(Either party may terminate this agreement with 15 days written notice. In case of termination, Service Provider shall be paid for work completed up to the termination date.) Tj
+0 -30 Td
+(8. FORCE MAJEURE) Tj
+0 -15 Td
+(Neither party shall be liable for delays or failures due to circumstances beyond their control, including natural disasters, government actions, or technical failures.) Tj
+0 -30 Td
+(9. GOVERNING LAW) Tj
+0 -15 Td
+(This agreement shall be governed by the Indian Contract Act, 1872, and any disputes shall be resolved through arbitration in accordance with the Arbitration and Conciliation Act, 2015.) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000254 00000 n 
+0000002500 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+2554
+%%EOF

@@ -1,0 +1,107 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 2000
+>>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+(EMPLOYMENT AGREEMENT) Tj
+0 -20 Td
+(Company: TechCorp India Pvt Ltd) Tj
+0 -20 Td
+(Employee: John Doe) Tj
+0 -20 Td
+(Position: Software Developer) Tj
+0 -40 Td
+(TERMS AND CONDITIONS:) Tj
+0 -20 Td
+(1. NON-COMPETE CLAUSE) Tj
+0 -15 Td
+(Employee agrees not to engage in any business that competes with the Company for a period of 24 months after termination of employment. This restriction shall apply within the territory of India and shall include direct and indirect competition.) Tj
+0 -30 Td
+(2. INTELLECTUAL PROPERTY ASSIGNMENT) Tj
+0 -15 Td
+(All work product, inventions, ideas, and creative works conceived, developed, or created by Employee during the course of employment, whether during working hours or personal time, shall be the exclusive property of the Company.) Tj
+0 -30 Td
+(3. TERMINATION NOTICE) Tj
+0 -15 Td
+(Either party may terminate this agreement with 30 days written notice. The Company reserves the right to terminate immediately for cause.) Tj
+0 -30 Td
+(4. CONFIDENTIALITY) Tj
+0 -15 Td
+(Employee shall maintain strict confidentiality regarding all Company information, trade secrets, and proprietary data both during and after employment.) Tj
+0 -30 Td
+(5. REMUNERATION) Tj
+0 -15 Td
+(Employee shall receive a monthly salary of Rs. 1,00,000/- payable on the last working day of each month. Additional benefits include health insurance and provident fund as per Company policy.) Tj
+0 -30 Td
+(6. WORKING HOURS) Tj
+0 -15 Td
+(Employee shall work 8 hours per day, Monday to Friday, with additional hours as required by business needs. Overtime compensation shall be provided as per Indian labor laws.) Tj
+0 -30 Td
+(7. ANNUAL LEAVE) Tj
+0 -15 Td
+(Employee is entitled to 21 days of annual leave per calendar year, subject to Company approval and business requirements.) Tj
+0 -30 Td
+(8. GOVERNING LAW) Tj
+0 -15 Td
+(This agreement shall be governed by the laws of India and any disputes shall be subject to the jurisdiction of courts in Mumbai, Maharashtra.) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000254 00000 n 
+0000002300 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+2354
+%%EOF
