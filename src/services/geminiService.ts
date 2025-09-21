@@ -1,5 +1,12 @@
-// Gemini AI Service for LegalEase India
-import { API_CONFIG, createGeminiRequest, getGeminiUrl } from '@/config/api';
+// Gemini AI Service for LegalEase India (Frontend)
+import { API_CONFIG } from '../config/api';
+
+// Configuration constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_TEXT_LENGTH = 100000; // 100k characters
+const CHUNK_SIZE = 50000; // 50k characters per chunk
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const SUPPORTED_DOCUMENT_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
 export interface DocumentAnalysisRequest {
   file: File;
@@ -35,156 +42,399 @@ export interface ChatResponse {
   }>;
 }
 
+export interface FileValidationResult {
+  isValid: boolean;
+  error?: string;
+  fileType: 'image' | 'document' | 'unsupported';
+}
+
 class GeminiService {
-  private async makeRequest(url: string, request: RequestInit): Promise<any> {
+  private readonly API_BASE_URL = API_CONFIG.BACKEND_URL + '/api'; // Backend server URL
+
+  /**
+   * Validates file before processing
+   */
+  private validateFile(file: File): FileValidationResult {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        isValid: false,
+        error: `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+        fileType: 'unsupported'
+      };
+    }
+
+    // Check file type
+    if (SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      return { isValid: true, fileType: 'image' };
+    }
+    
+    if (SUPPORTED_DOCUMENT_TYPES.includes(file.type)) {
+      return { isValid: true, fileType: 'document' };
+    }
+
+    return {
+      isValid: false,
+      error: `Unsupported file type: ${file.type}. Supported types: ${[...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_DOCUMENT_TYPES].join(', ')}`,
+      fileType: 'unsupported'
+    };
+  }
+
+  /**
+   * Uploads file to backend for text extraction
+   */
+  private async uploadFileForExtraction(file: File): Promise<{ text: string; fileName: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    console.log('📤 Uploading file to backend:', file.name, 'Size:', file.size, 'Type:', file.type);
+
     try {
-      console.log('Making Gemini API request to:', url);
-      console.log('Request body:', request.body);
+      const response = await fetch(`${this.API_BASE_URL}/documents/extract-text`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      console.log('📡 Backend response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Backend error:', errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Text extraction successful:', {
+        fileName: result.fileName,
+        textLength: result.textLength,
+        fileType: result.fileType
+      });
+
+      return {
+        text: result.text,
+        fileName: result.fileName || file.name
+      };
+    } catch (error) {
+      console.error('❌ File upload failed:', error);
       
-      const response = await fetch(url, request);
+      // Provide more specific error messages
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to backend server. Please make sure the API is running.');
+      }
       
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+      throw new Error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Makes HTTP request to backend API with proper error handling
+   */
+  private async makeBackendRequest(endpoint: string, requestBody: any): Promise<any> {
+    try {
+      console.log('Making backend API request to:', endpoint);
+      
+      const response = await fetch(`${this.API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+        let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+        
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            const errorData = JSON.parse(errorText);
+            console.error('Backend API Error:', errorData);
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          // If it's a 404, provide a more specific message
+          if (response.status === 404) {
+            errorMessage = 'API endpoint not found. Please make sure the backend server is running on port 3001.';
+          }
+        }
+        
+        // Provide user-friendly error messages based on status codes
+        if (response.status === 500) {
+          errorMessage = 'AI service is temporarily unavailable. Please try again later.';
+        } else if (response.status === 429) {
+          errorMessage = 'Too many requests. Please wait a moment and try again.';
+        } else if (response.status === 503) {
+          errorMessage = 'Service temporarily unavailable. Please try again later.';
+        } else if (response.status === 400) {
+          errorMessage = 'Invalid request. Please check your input and try again.';
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
-      console.log('API Response:', data);
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Backend API returned an error');
+      }
+      
       return data;
     } catch (error) {
-      console.error('Gemini API Error:', error);
+      console.error('Backend API Error:', error);
+      
+      // Provide more specific error messages for common issues
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to the server. Please make sure the backend is running and try again.');
+      }
+      
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      
       throw error;
     }
   }
 
-  async analyzeDocument(file: File, language: string = 'en'): Promise<DocumentAnalysisResponse> {
-    try {
-      // Extract text from the uploaded file
-      const extractedText = await this.extractTextFromFile(file);
-      
-      // Check if this is an image file
-      const isImage = file.type.startsWith('image/');
-      
-      // Create a comprehensive prompt for Gemini
-      let prompt: string;
-      
-      if (isImage) {
-        // For images, use vision capabilities
-        prompt = `You are a legal AI assistant specializing in Indian law. Analyze this legal document image and provide a detailed analysis.
-
-This appears to be a traffic challan (violation notice) from Uttar Pradesh Police. Please:
-1. Extract all text from the image using OCR
-2. Identify the violation details, challan number, vehicle information
-3. Analyze the legal implications under Indian Motor Vehicles Act
-4. Provide risk assessment and recommendations
-
-IMPORTANT: 
-- Provide summary_en in English ONLY
-- Provide summary_local in ${language === 'hi' ? 'Hindi ONLY' : 'English ONLY'}
-- Do NOT mix languages within the same field
-- Return ONLY valid JSON without markdown code blocks
-- For Hindi summary, write complete sentences in Hindi using Devanagari script
-
-Return your response as a clean JSON object:
-{
-  "summary_en": "Complete English summary of the challan details, violation, fine amount, and legal implications",
-  "summary_local": "${language === 'hi' ? 'यह उत्तर प्रदेश पुलिस द्वारा 31 दिसंबर 2019 को 15:26:05 पर जारी किया गया ट्रैफिक चालान (उल्लंघन नोटिस) है। उल्लंघन: हेलमेट के बिना दोपहिया वाहन चलाना, यूपी एमवी नियम 1998 नियम 201 के तहत। जुर्माना: 500 रुपये। समय पर भुगतान न करने पर कानूनी कार्रवाई हो सकती है।' : 'Complete English summary of the challan details, violation, fine amount, and legal implications'}",
-  "clauses": [
-    {
-      "title": "Traffic Violation Details",
-      "source_excerpt": "Extracted text from the challan about the violation",
-      "explanation_en": "Explanation of the violation and its legal implications",
-      "risk_level": "HIGH",
-      "risk_reasons": ["Legal notice requires immediate attention", "Fine payment deadline", "Potential court proceedings"],
-      "india_markers": ["motor_vehicles_act", "traffic_law", "penalty_notice"]
+  /**
+   * Splits large text into manageable chunks
+   */
+  private splitTextIntoChunks(text: string): string[] {
+    if (text.length <= CHUNK_SIZE) {
+      return [text];
     }
-  ],
-  "recommended_questions": [
-    "What is the specific violation I'm being charged for?",
-    "What is the fine amount and payment deadline?",
-    "What happens if I don't pay the fine on time?",
-    "Can I contest this challan in court?",
-    "What are my legal rights in this case?"
-  ],
-  "disclaimer": "This is a legal notice that requires immediate attention. Please consult with a traffic lawyer for specific advice regarding your case."
-}`;
-      } else {
-        // For text documents
-        prompt = `You are a legal AI assistant specializing in Indian law. Analyze the following legal document and provide a detailed analysis.
 
-DOCUMENT TEXT:
-${extractedText}
+    const chunks: string[] = [];
+    let start = 0;
 
-IMPORTANT: 
-- Provide summary_en in English ONLY
-- Provide summary_local in ${language === 'hi' ? 'Hindi ONLY' : 'English ONLY'}
-- Do NOT mix languages within the same field
-- Return ONLY valid JSON without markdown code blocks
-- For Hindi summary, write complete sentences in Hindi using Devanagari script
-
-Return your response as a clean JSON object:
-{
-  "summary_en": "Complete English summary of the document",
-  "summary_local": "${language === 'hi' ? 'दस्तावेज़ का पूरा हिंदी सारांश - मुख्य बिंदु, शर्तें और कानूनी प्रभाव' : 'Complete English summary of the document'}",
-  "clauses": [
-    {
-      "title": "Clause title",
-      "source_excerpt": "Relevant text from document",
-      "explanation_en": "Simple explanation",
-      "risk_level": "HIGH/MEDIUM/LOW",
-      "risk_reasons": ["reason1", "reason2"],
-      "india_markers": ["legal_area1", "legal_area2"]
-    }
-  ],
-  "recommended_questions": ["question1", "question2"],
-  "disclaimer": "Legal disclaimer text"
-}`;
+    while (start < text.length) {
+      let end = start + CHUNK_SIZE;
+      
+      // Try to break at sentence boundary
+      if (end < text.length) {
+        const lastSentenceEnd = text.lastIndexOf('.', end);
+        const lastNewline = text.lastIndexOf('\n', end);
+        const breakPoint = Math.max(lastSentenceEnd, lastNewline);
+        
+        if (breakPoint > start + CHUNK_SIZE * 0.5) {
+          end = breakPoint + 1;
+        }
       }
 
-      try {
-        // Call Gemini API
-        const response = await this.makeRequest(
-          getGeminiUrl('gemini-1.5-flash'),
-          createGeminiRequest(prompt, 'gemini-1.5-flash', isImage ? extractedText : undefined)
-        );
+      chunks.push(text.substring(start, end).trim());
+      start = end;
+    }
 
-        // Parse the response
-        let analysisText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    return chunks;
+  }
+
+  /**
+   * Simple JSON repair for common issues (browser-compatible)
+   */
+  private repairJson(jsonString: string): string {
+    try {
+      // Try basic JSON repair techniques
+      let repaired = jsonString.trim();
+      
+      // Remove markdown code blocks
+      repaired = repaired.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+      
+      // Find the first { and last } to extract just the JSON
+      const firstBrace = repaired.indexOf('{');
+      const lastBrace = repaired.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        repaired = repaired.substring(firstBrace, lastBrace + 1);
+      }
+      
+      // Try to parse to validate
+      JSON.parse(repaired);
+      return repaired;
+    } catch (error) {
+      console.warn('JSON repair failed:', error);
+      return jsonString;
+    }
+  }
+
+  /**
+   * Main method to analyze documents using backend API + Gemini AI
+   */
+  async analyzeDocument(file: File, language: string = 'en'): Promise<DocumentAnalysisResponse> {
+    try {
+      // Validate file first
+      const validation = this.validateFile(file);
+      if (!validation.isValid) {
+        throw new Error(validation.error || 'Invalid file');
+      }
+
+      // Check if this is an image file (handle locally)
+      const isImage = validation.fileType === 'image';
+      
+      if (isImage) {
+        // For images, extract data URL and process locally
+        const imageData = await this.extractImageData(file);
+        return await this.analyzeImageDocument(file, imageData, language);
+      } else {
+        // For documents, upload to backend for text extraction
+        const { text: extractedText, fileName } = await this.uploadFileForExtraction(file);
         
-        // Clean up the response text - remove markdown code blocks
-        analysisText = this.cleanJsonResponse(analysisText);
-        
-        try {
-          // Try to parse as JSON
-          const analysis = JSON.parse(analysisText);
-          return this.validateAndCleanAnalysis(analysis, language);
-        } catch (parseError) {
-          console.warn('JSON parsing failed, creating structured response:', parseError);
-          // If JSON parsing fails, create a structured response from the text
-          return this.createStructuredResponse(analysisText, extractedText, language);
+        if (!extractedText || extractedText.trim().length === 0) {
+          throw new Error('No text could be extracted from the file');
         }
-      } catch (apiError) {
-        console.warn('Gemini API failed, using fallback analysis:', apiError);
-        // Fallback to a basic analysis if API fails
-        return this.createFallbackAnalysis(extractedText, file.name, language);
+
+        return await this.analyzeTextDocument(extractedText, fileName, language);
       }
 
     } catch (error) {
       console.error('Document analysis failed:', error);
-      // Final fallback - return a basic analysis
-      return this.createFallbackAnalysis('Document analysis failed', file.name, language);
+      // Return fallback analysis with error context
+      return this.createFallbackAnalysis(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        file.name,
+        language
+      );
     }
+  }
+
+  /**
+   * Extracts image data for local processing
+   */
+  private async extractImageData(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        resolve(result);
+      };
+      reader.onerror = () => reject(new Error('Failed to read image file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Analyzes image documents using backend API
+   */
+  private async analyzeImageDocument(file: File, imageData: string, language: string): Promise<DocumentAnalysisResponse> {
+    try {
+      // For images, we'll send the base64 data to the backend
+      const response = await this.makeBackendRequest('/gemini/analyze', {
+        text: imageData, // The imageData contains the base64 encoded image
+        language: language
+      });
+
+      return response.analysis;
+    } catch (apiError) {
+      console.warn('Backend API failed for image analysis, using fallback analysis:', apiError);
+      return this.createFallbackAnalysis(imageData, file.name, language);
+    }
+  }
+
+  /**
+   * Analyzes text documents using backend API
+   */
+  private async analyzeTextDocument(extractedText: string, fileName: string, language: string): Promise<DocumentAnalysisResponse> {
+    // Check if text is too long and needs chunking
+    if (extractedText.length > MAX_TEXT_LENGTH) {
+      return await this.analyzeLargeDocument(extractedText, fileName, language);
+    }
+
+    try {
+      const response = await this.makeBackendRequest('/gemini/analyze', {
+        text: extractedText,
+        language: language
+      });
+
+      return response.analysis;
+    } catch (apiError) {
+      console.warn('Backend API failed, using fallback analysis:', apiError);
+      return this.createFallbackAnalysis(extractedText, fileName, language);
+    }
+  }
+
+  /**
+   * Analyzes large documents by processing them in chunks
+   */
+  private async analyzeLargeDocument(extractedText: string, fileName: string, language: string): Promise<DocumentAnalysisResponse> {
+    const chunks = this.splitTextIntoChunks(extractedText);
+    const chunkAnalyses: DocumentAnalysisResponse[] = [];
+
+    // Process each chunk
+    for (let i = 0; i < chunks.length; i++) {
+      try {
+        const response = await this.makeBackendRequest('/gemini/analyze', {
+          text: chunks[i],
+          language: language
+        });
+
+        chunkAnalyses.push(response.analysis);
+      } catch (error) {
+        console.warn(`Failed to analyze chunk ${i + 1}:`, error);
+        // Continue with other chunks
+      }
+    }
+
+    // Combine all chunk analyses
+    return this.combineChunkAnalyses(chunkAnalyses, language);
+  }
+
+
+
+  /**
+   * Combines multiple chunk analyses into a single response
+   */
+  private combineChunkAnalyses(chunkAnalyses: DocumentAnalysisResponse[], language: string): DocumentAnalysisResponse {
+    if (chunkAnalyses.length === 0) {
+      return this.createFallbackAnalysis('No chunks could be analyzed', 'document', language);
+    }
+
+    if (chunkAnalyses.length === 1) {
+      return chunkAnalyses[0];
+    }
+
+    // Combine summaries
+    const combinedSummaryEn = chunkAnalyses
+      .map(chunk => chunk.summary_en)
+      .filter(summary => summary && summary.trim().length > 0)
+      .join(' ');
+
+    const combinedSummaryLocal = chunkAnalyses
+      .map(chunk => chunk.summary_local)
+      .filter(summary => summary && summary.trim().length > 0)
+      .join(' ');
+
+    // Combine all clauses
+    const allClauses = chunkAnalyses.flatMap(chunk => chunk.clauses);
+
+    // Combine all recommended questions (remove duplicates)
+    const allQuestions = Array.from(new Set(
+      chunkAnalyses.flatMap(chunk => chunk.recommended_questions)
+    ));
+
+    // Use the most comprehensive disclaimer
+    const disclaimers = chunkAnalyses.map(chunk => chunk.disclaimer);
+    const bestDisclaimer = disclaimers.find(d => d && d.length > 50) || disclaimers[0] || '';
+
+    return {
+      summary_en: combinedSummaryEn || 'Document analysis completed across multiple sections.',
+      summary_local: combinedSummaryLocal || (language === 'hi' ? 'दस्तावेज़ का विश्लेषण कई खंडों में पूरा हो गया है।' : 'Document analysis completed across multiple sections.'),
+      clauses: allClauses,
+      recommended_questions: allQuestions,
+      disclaimer: bestDisclaimer
+    };
   }
 
   private createFallbackAnalysis(extractedText: string, fileName: string, language: string): DocumentAnalysisResponse {
     const isChallan = fileName.toLowerCase().includes('challan') || 
                      extractedText.toLowerCase().includes('challan') ||
                      extractedText.toLowerCase().includes('traffic') ||
-                     extractedText.toLowerCase().includes('violation');
+                     extractedText.toLowerCase().includes('violation') ||
+                     extractedText.toLowerCase().includes('vehicle inspection') ||
+                     extractedText.toLowerCase().includes('infringement report') ||
+                     extractedText.toLowerCase().includes('motor vehicles act');
+    
+    const isTamilNaduChallan = extractedText.toLowerCase().includes('tamilnadu') || 
+                              extractedText.toLowerCase().includes('tamil nadu') ||
+                              extractedText.toLowerCase().includes('chennai traffic police');
     
     const fileType = isChallan ? 'Traffic Challan' : 
                     fileName.toLowerCase().includes('rental') ? 'Rental Agreement' :
@@ -194,26 +444,34 @@ Return your response as a clean JSON object:
 
     if (isChallan) {
       return {
-        summary_en: `This is a traffic challan (violation notice) document. The document appears to be a legal notice issued by traffic authorities for a motor vehicle violation. Please review the violation details, fine amount, and legal implications carefully.`,
+        summary_en: `This is a traffic challan (violation notice) document${isTamilNaduChallan ? ' issued by Tamil Nadu Traffic Police' : ''}. The document appears to be a legal notice issued by traffic authorities for a motor vehicle violation under the Motor Vehicles Act, 1988. Please review the violation details, fine amount, and legal implications carefully.`,
         summary_local: language === 'hi' ? 
-          `यह एक ट्रैफिक चालान (उल्लंघन नोटिस) दस्तावेज़ है। यह दस्तावेज़ मोटर वाहन उल्लंघन के लिए ट्रैफिक अधिकारियों द्वारा जारी किया गया कानूनी नोटिस प्रतीत होता है। कृपया उल्लंघन विवरण, जुर्माना राशि और कानूनी प्रभावों की सावधानीपूर्वक समीक्षा करें।` :
-          `This is a traffic challan (violation notice) document. Please review the violation details carefully.`,
+          `यह एक ट्रैफिक चालान (उल्लंघन नोटिस) दस्तावेज़ है${isTamilNaduChallan ? ' जो तमिलनाडु ट्रैफिक पुलिस द्वारा जारी किया गया है' : ''}। यह दस्तावेज़ मोटर वाहन उल्लंघन के लिए ट्रैफिक अधिकारियों द्वारा जारी किया गया कानूनी नोटिस प्रतीत होता है। कृपया उल्लंघन विवरण, जुर्माना राशि और कानूनी प्रभावों की सावधानीपूर्वक समीक्षा करें।` :
+          `This is a traffic challan (violation notice) document${isTamilNaduChallan ? ' issued by Tamil Nadu Traffic Police' : ''}. Please review the violation details carefully.`,
         clauses: [
           {
             title: "Traffic Violation Notice",
-            source_excerpt: extractedText.substring(0, 200) + "...",
-            explanation_en: "This is a legal notice for a traffic violation. It contains details about the offense, fine amount, and legal consequences under the Motor Vehicles Act.",
+            source_excerpt: extractedText.substring(0, 300) + "...",
+            explanation_en: "This is a legal notice for a traffic violation under the Motor Vehicles Act, 1988. It contains details about the offense, fine amount, and legal consequences. The document appears to be issued by traffic police authorities.",
             risk_level: "HIGH",
-            risk_reasons: ["Legal notice requires immediate attention", "Fine payment deadline", "Potential court proceedings"],
-            india_markers: ["motor_vehicles_act", "traffic_law", "penalty_notice"]
+            risk_reasons: ["Legal notice requires immediate attention", "Fine payment deadline", "Potential court proceedings", "Vehicle registration may be affected"],
+            india_markers: ["motor_vehicles_act", "traffic_law", "penalty_notice", "tamil_nadu_traffic"]
           },
           {
             title: "Payment and Compliance",
             source_excerpt: "Payment and compliance requirements",
-            explanation_en: "The challan requires payment of the specified fine within the given timeframe to avoid further legal action.",
+            explanation_en: "The challan requires payment of the specified fine within the given timeframe to avoid further legal action. Non-payment may result in additional penalties or court proceedings.",
             risk_level: "MEDIUM",
-            risk_reasons: ["Time-sensitive payment", "Additional penalties for delay"],
-            india_markers: ["fine_payment", "compliance_deadline"]
+            risk_reasons: ["Time-sensitive payment", "Additional penalties for delay", "Vehicle impoundment risk"],
+            india_markers: ["fine_payment", "compliance_deadline", "motor_vehicles_act"]
+          },
+          {
+            title: "Document Completeness",
+            source_excerpt: extractedText.substring(0, 200) + "...",
+            explanation_en: "Review the document for completeness. Ensure all required fields are filled including challan number, vehicle details, offense description, and fine amount.",
+            risk_level: "MEDIUM",
+            risk_reasons: ["Incomplete information may affect validity", "Missing details could delay processing"],
+            india_markers: ["document_validation", "legal_procedure"]
           }
         ],
         recommended_questions: [
@@ -222,7 +480,9 @@ Return your response as a clean JSON object:
           "What happens if I don't pay the fine on time?",
           "Can I contest this challan?",
           "What are my legal rights in this case?",
-          "How does this affect my driving record?"
+          "How does this affect my driving record?",
+          "Is this challan valid if some fields are blank?",
+          "What should I do if the challan has incomplete information?"
         ],
         disclaimer: "This is a legal notice that requires immediate attention. Please consult with a traffic lawyer or legal expert for specific advice regarding your case. Non-payment may result in additional penalties or court proceedings."
       };
@@ -253,58 +513,19 @@ Return your response as a clean JSON object:
     };
   }
 
-  private async extractTextFromFile(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        const content = e.target?.result;
-        
-        if (file.type === 'application/pdf') {
-          // For PDF files, we'll use a simple text extraction
-          // In production, you'd use a proper PDF parsing library
-          resolve(this.extractTextFromPDF(content as ArrayBuffer));
-        } else if (file.type.includes('wordprocessingml')) {
-          // For DOCX files
-          resolve(this.extractTextFromDOCX(content as string));
-        } else if (file.type.startsWith('image/')) {
-          // For image files, return base64 data for Gemini vision processing
-          resolve(this.extractTextFromImage(content as string, file.type));
-        } else {
-          resolve('Document text extraction not supported for this file type.');
-        }
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      
-      if (file.type === 'application/pdf') {
-        reader.readAsArrayBuffer(file);
-      } else if (file.type.startsWith('image/')) {
-        reader.readAsDataURL(file);
-      } else {
-        reader.readAsText(file);
-      }
-    });
-  }
 
-  private extractTextFromPDF(arrayBuffer: ArrayBuffer): string {
-    // For now, return a descriptive placeholder
-    // In production, you would use a proper PDF parsing library like pdf-parse
-    const sizeKB = Math.round(arrayBuffer.byteLength / 1024);
-    return `[PDF Document - ${sizeKB}KB] This is a legal document that has been uploaded for analysis. The document contains legal terms, conditions, and clauses that need to be reviewed for compliance with Indian law. Please analyze the content for potential risks, legal implications, and areas that may require attention.`;
-  }
+  /**
+   * Sanitizes text content for security and display
+   */
+  private sanitizeText(text: string): string {
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
 
-  private extractTextFromDOCX(content: string): string {
-    // Extract readable text from DOCX content
-    const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    const preview = cleanContent.substring(0, 2000);
-    return `[DOCX Document] ${preview}${cleanContent.length > 2000 ? '...' : ''} This is a legal document that has been uploaded for analysis. Please review the content for legal clauses, terms, and conditions that may have implications under Indian law.`;
-  }
-
-  private extractTextFromImage(dataUrl: string, mimeType: string): string {
-    // For images, we return the data URL for Gemini vision processing
-    // The base64 data will be sent to Gemini for OCR and analysis
-    return `[IMAGE_DATA:${mimeType}]${dataUrl}`;
+    return text
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
   }
 
   private cleanJsonResponse(text: string): string {
@@ -385,59 +606,34 @@ Return your response as a clean JSON object:
   }
 
   async chatWithDocument(request: ChatRequest): Promise<ChatResponse> {
-    const prompt = `You are a legal AI assistant specializing in Indian law. Answer this question about the legal document: "${request.question}"
-    
-    Context: ${request.context || 'No additional context provided.'}
-    
-    Provide a detailed answer focusing on Indian legal implications and cite relevant sections of Indian law where applicable.
-    
-    Format your response as JSON:
-    {
-      "answer": "Your detailed answer here",
-      "evidence": [
-        {
-          "chunk_id": 1,
-          "snippet": "Relevant text from document"
-        }
-      ]
-    }`;
-    
     try {
-      // Call Gemini API
-      const response = await this.makeRequest(
-        getGeminiUrl('gemini-1.5-flash'),
-        createGeminiRequest(prompt)
-      );
+      const response = await this.makeBackendRequest('/gemini/chat', {
+        question: request.question,
+        context: request.context,
+        docId: request.docId
+      });
 
-      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      try {
-        // Try to parse as JSON
-        const parsedResponse = JSON.parse(responseText);
-        return parsedResponse;
-      } catch (parseError) {
-        // If JSON parsing fails, return the text as answer
-        return {
-          answer: responseText,
-          evidence: []
-        };
-      }
+      return {
+        answer: response.answer,
+        evidence: response.evidence || []
+      };
     } catch (error) {
       console.error('Chat request failed:', error);
       throw new Error('Failed to get response. Please try again.');
     }
   }
 
+  /**
+   * Generates a summary using backend API
+   */
   async generateSummary(text: string, language: string = 'en'): Promise<string> {
-    const prompt = `Summarize this legal document in ${language === 'hi' ? 'Hindi' : 'English'}, focusing on key terms, risks, and Indian legal implications. Keep it concise but comprehensive.`;
-    
     try {
-      // Mock implementation - replace with actual Gemini API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return language === 'hi' 
-        ? "यह एक व्यापक रोजगार अनुबंध है जो एक सॉफ्टवेयर डेवलपर पद के लिए नियम और शर्तों को निर्धारित करता है।"
-        : "This is a comprehensive employment contract that outlines terms and conditions for a software developer position.";
+      const response = await this.makeBackendRequest('/gemini/summary', {
+        text: text,
+        language: language
+      });
+
+      return response.summary;
     } catch (error) {
       console.error('Summary generation failed:', error);
       throw new Error('Failed to generate summary. Please try again.');

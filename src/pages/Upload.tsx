@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Shield, Zap, Globe } from "lucide-react";
+import { ArrowRight, Shield, Zap, Globe, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import FileDropZone from "@/components/FileDropZone";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { DebugPanel } from "@/components/DebugPanel";
 import { toast } from "@/hooks/use-toast";
 import { geminiService } from "@/services/geminiService";
 
@@ -15,6 +16,7 @@ const Upload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   const navigate = useNavigate();
 
   const handleFileSelect = (selectedFile: File) => {
@@ -92,10 +94,22 @@ const Upload = () => {
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Upload Your{" "}
-            <span className="text-gradient">Legal Document</span>
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <div></div>
+            <h1 className="text-4xl md:text-5xl font-bold">
+              Upload Your{" "}
+              <span className="text-gradient">Legal Document</span>
+            </h1>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDebugPanel(!showDebugPanel)}
+              className="flex items-center gap-2"
+            >
+              <Bug className="h-4 w-4" />
+              Debug
+            </Button>
+          </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Get instant, AI-powered analysis of contracts, agreements, and legal documents 
             tailored for Indian law and regulations.
@@ -209,6 +223,13 @@ const Upload = () => {
             </Card>
           </div>
         </div>
+
+        {/* Debug Panel */}
+        {showDebugPanel && (
+          <div className="mt-12">
+            <DebugPanel />
+          </div>
+        )}
       </div>
     </div>
   );
